@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ToDo</title>
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="title">
+        <h3 style="font-size: 30px;">ToDo App</h3>
+    </div>
+    <div class="task">
+        <!--Title Box-->
+        <h2 id="task-header">Add task</h2>
+        <input type="text" id="title_box" placeholder="Enter Title"><br>
+        <!--Add Button-->  
+        <button class="add_but" onclick="get_value()" id="add_button">Add</button>
+        <!-- Error message --> 
+        <div class="error-message" id="error-message">Description required!</div>
+    </div>
+    <br>
+    <!-- Display the list of task -->
+    <div id="taskcontainer"></div>
+    <script>
+        let editMode = false;
+        let currentTaskIndex = null;
+        let isEditing = false;
+        let tasks = [];
+
+        // Load tasks from local storage when the page loads
+        window.onload = function() {
+            let storedTasks = localStorage.getItem("tasks");// assign all values avilable in task to storedTasks
+            if (storedTasks) {
+                tasks = JSON.parse(storedTasks);
+                renderTasks();
+            }
+        };
+
+        function get_value() {
+            let input_title = document.getElementById("title_box").value;
+            let errorMessage = document.getElementById("error-message");
+ // If title box is empty then Error message pops up
+            if (input_title.trim() === "") {
+                errorMessage.style.display = "block";
+                return;
+            } else {
+                errorMessage.style.display = "none";
+            }
+            // if edit button is clicked 
+            if (editMode) {
+                tasks[currentTaskIndex].title = input_title;
+                localStorage.setItem("tasks", JSON.stringify(tasks)); //select that particular task in array
+                renderTasks();
+                document.getElementById("add_button").innerText = "Add"; // Reset button text to "Add"
+                document.getElementById("task-header").innerText = "Add task"; // Reset task header to "Add task"
+                editMode = false;           // assigin edit mode to false
+                currentTaskIndex = null;
+                isEditing = false;
+            } else {
+                let newTask = { title: input_title };
+                tasks.push(newTask);                // add new task to array
+                localStorage.setItem("tasks", JSON.stringify(tasks)); //storing task
+                renderTasks();
+            }
+
+            document.getElementById("title_box").value = "";
+        }
+
+        function edittask(newtask, index) {
+            if (isEditing) {                // when one task is editing if again edit button is clicked error message is poped
+                alert("Another task is already being edited. Please finish editing that task first.");
+                return;
+            }
+            // select h3 tag to input text
+            let titleelement = newtask.querySelector('h3');
+            document.getElementById("title_box").value = titleelement.textContent;
+            document.getElementById("add_button").innerText = "Update";
+            document.getElementById("task-header").innerText = "Edit task";
+
+            newtask.style.display = "none";
+
+            document.getElementById("taskcontainer").classList.add("edit-mode");
+            editMode = true;
+            currentTaskIndex = index;
+            isEditing = true;
+        }
+
+        function renderTasks() {
+            let taskContainer = document.getElementById("taskcontainer");
+            taskContainer.innerHTML = "";
+            tasks.forEach((task, index) => {
+                let newtask = document.createElement("div");
+                newtask.className = "display-box";
+                let titleDiv = document.createElement("div");
+                titleDiv.className = "h3_div";
+                titleDiv.innerHTML = '<h3>' + task.title + '</h3>';
+
+                let buttonsDiv = document.createElement("div");
+                buttonsDiv.className = "button_div";
+                let deleteButton = document.createElement("button");
+                deleteButton.className = "delete-btn";
+                deleteButton.innerText = "🗑️";
+                deleteButton.addEventListener('click', function() {
+                    tasks.splice(index, 1);
+                    localStorage.setItem("tasks", JSON.stringify(tasks));
+                    renderTasks();
+                });
+
+                let editbutton = document.createElement("button");
+                editbutton.className = "edit_button";
+                editbutton.innerText = "✏️";
+                editbutton.addEventListener('click', function() {
+                    edittask(newtask, index);
+                });
+
+                buttonsDiv.appendChild(editbutton);
+                buttonsDiv.appendChild(deleteButton);
+                newtask.appendChild(titleDiv);
+                newtask.appendChild(buttonsDiv);
+                taskContainer.appendChild(newtask);
+            });
+        }
+    </script>
+    
+</body>
+</html>
